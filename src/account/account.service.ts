@@ -14,13 +14,26 @@ export class AccountService {
   }
 
   tranferWithTax(payer: AccountEntity, receiver: AccountEntity, transferAmount: number) {
-    payer.balance = this.addTax(payer) - transferAmount
-    receiver.balance = receiver.balance + transferAmount
-    return [payer, receiver]
+    try {
+      this.checkPriceErros(transferAmount)
+      payer.balance = this.addTax(payer) - transferAmount
+      receiver.balance = receiver.balance + transferAmount
+      return [payer, receiver]
+    } catch (error) {
+      throw error
+    }
   }
 
   addTax(payer: AccountEntity) {
     const tax = 100
     return payer.balance - tax
   }
+
+  checkPriceErros(transferAmount: number) {
+    if (transferAmount <= 0) throw new Error(`O valor tranferido é 0 ou negativo`);
+    if (transferAmount < 1000) throw new Error(`Não é possivel transferir menos de 1000`);
+    if (transferAmount > 9999) throw new Error(`Não é possivel transferir menos de 9999`);
+    return true
+  }
+
 }
