@@ -52,7 +52,7 @@ describe('AccountService', () => {
 
       expect(transferRun).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ id: 1, balance: 400 }),
+          expect.objectContaining({ id: 1, balance: 350 }),
           expect.objectContaining({ id: 2, balance: 1500 }),
         ])
       )
@@ -70,12 +70,56 @@ describe('AccountService', () => {
     })
 
     it("Não é possivel transferir mais de 9999", () => {
-      const accountPayer = new AccountEntity(1, 500)
+      const accountPayer = new AccountEntity(1, 15000)
       const accountReceiver = new AccountEntity(2, 500)
 
       const transferRun = () => service.tranferWithTax(accountPayer, accountReceiver, 10000)
 
       expect(transferRun).toThrow(Error("Não é possivel transferir menos de 9999"))
+    })
+
+    it("Saldo insuficiente", () => {
+      const accountPayer = new AccountEntity(1, 500)
+      const accountReceiver = new AccountEntity(2, 0)
+
+      const transferRun = () => service.tranferWithTax(accountPayer, accountReceiver, 1000)
+
+      expect(transferRun).toThrow(Error("Saldo insuficiente"))
+    })
+  })
+
+  describe("Tranferencia com taxa + porcentagem", () => {
+    it("Retornando 10% de 1000", () => {
+      const percentage = service.addPercentage(1000, 10)
+      expect(percentage).toEqual(100)
+    })
+
+    it("Entre 1000 a 5000 deve conter uma taxa de 5% sobre o valor da tranferencia + taxa padrão", () => {
+      const accountPayer = new AccountEntity(1, 1500)
+      const accountReceiver = new AccountEntity(2, 100)
+
+      const addPercentage = service.tranferWithTax(accountPayer, accountReceiver, 1000)
+
+      expect(addPercentage).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 1, balance: 350 }),
+          expect.objectContaining({ id: 2, balance: 1100 }),
+        ])
+      )
+    })
+
+    it("Maior que 5000 deve conter uma taxa de 10% sobre o valor da tranferencia + taxa padrão", () => {
+      const accountPayer = new AccountEntity(1, 6000)
+      const accountReceiver = new AccountEntity(2, 100)
+
+      const addPercentage = service.tranferWithTax(accountPayer, accountReceiver, 5100)
+
+      expect(addPercentage).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 1, balance: 290 }),
+          expect.objectContaining({ id: 2, balance: 5200 }),
+        ])
+      )
     })
   })
 });
